@@ -65,12 +65,12 @@ function getNpcTargetString(npc: NPC) {
 
 // private. dont use directly
 function getNpcFormId(npc: NPC) {
-  return npc.id.replace(/^0+/, '0x');
+  return '0x' + npc.id.replace(/^0+/, '');
 }
 
 function processNpcs() {
   const npcKeys = Object.keys(npcs);
-  let result = "Keyword = RSVIgnore|";
+  let result = "Keyword = RSVignore|NONE|";
   const npcStrings = [];
   for (const key of npcKeys) {
     const npc = npcs[key];
@@ -79,7 +79,7 @@ function processNpcs() {
       npcStrings.push(npcTargetString);
     }
   }
-  result += npcStrings.join(', ');
+  result += npcStrings.join(',');
   const outputPath = path.join(process.cwd(), 'zzzEasyNPC RSV Exclude_DISTR.ini');
   fs.writeFileSync(outputPath, result);
   console.log(`Result written to ${outputPath}`);
