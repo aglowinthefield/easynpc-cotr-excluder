@@ -2,18 +2,31 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 import { homedir } from 'os';
+import { parse } from 'smol-toml';
 
-const COTR_PLUGINS: string[] = [
-  "Karura's Ordinary People Refined.esp",
-  "MOSRefined.esp",
-  "MOSRefinedDawnguard.esp",
-  "MOSRefinedDragonborn.esp",
-  "TDOSRefined.esp",
-  "TSOSRefined.esp",
-  "TSOSRefinedDawnguard.esp",
-  "TSOSRefinedDragonborn.esp",
-  "TSOSRefinedHearthfire.esp",
-]
+type Config = {
+  EasyNpcProfilePath: string;
+  OutputPath: string;
+  COTRPlugins: string[];
+};
+
+function expandPath(p: string): string {
+  if (p.startsWith('~/')) {
+    return path.join(homedir(), p.slice(2));
+  }
+  if (p.startsWith('./')) {
+    return path.join(process.cwd(), p.slice(2));
+  }
+  return p;
+}
+
+const configPath = path.join(process.cwd(), 'config.toml');
+if (!fs.existsSync(configPath)) {
+  console.error(`Config file not found: ${configPath}`);
+  process.exit(1);
+}
+const configContent = fs.readFileSync(configPath, 'utf-8');
+const config = parse(configContent) as Config;
 
 type ProfileLogEntry = {
   master: string;
@@ -32,14 +45,14 @@ type NPC = {
   FaceMod?: string;
 }
 
-const appDataPath = path.join(homedir(), 'AppData', 'Local', 'EasyNPC', 'Profile.log');
+const profilePath = expandPath(config.EasyNpcProfilePath);
 
-if (!fs.existsSync(appDataPath)) {
-  console.error(`File not found: ${appDataPath}`);
+if (!fs.existsSync(profilePath)) {
+  console.error(`File not found: ${profilePath}`);
   process.exit(1);
 }
 
-const fileStream = fs.createReadStream(appDataPath);
+const fileStream = fs.createReadStream(profilePath);
 
 // Create an interface to read the file line by line
 const rl = readline.createInterface({
@@ -47,7 +60,7 @@ const rl = readline.createInterface({
   crlfDelay: Infinity
 });
 
-const npcs: {[key: string]: NPC} = {};
+const npcs: { [key: string]: NPC } = {};
 
 function updateNpc(profileLogEntry: ProfileLogEntry) {
   const npcId = profileLogEntry.id;
@@ -74,13 +87,13 @@ function processNpcs() {
   const npcStrings = [];
   for (const key of npcKeys) {
     const npc = npcs[key];
-    if (npc.FacePlugin && COTR_PLUGINS.includes(npc.FacePlugin)) {
+    if (npc.FacePlugin && config.COTRPlugins.includes(npc.FacePlugin)) {
       const npcTargetString = getNpcTargetString(npc);
       npcStrings.push(npcTargetString);
     }
   }
   result += npcStrings.join(',');
-  const outputPath = path.join(process.cwd(), 'zzzEasyNPC RSV Exclude_DISTR.ini');
+  const outputPath = expandPath(config.OutputPath);
   fs.writeFileSync(outputPath, result);
   console.log(`Result written to ${outputPath}`);
 }
