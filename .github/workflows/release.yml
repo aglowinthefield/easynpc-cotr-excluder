@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test
+
+      - name: Build executable
+        run: bun run build
+
+      - name: Download UPX
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-win64.zip" -OutFile "upx.zip"
+          Expand-Archive -Path "upx.zip" -DestinationPath "."
+
+      - name: Compress executable with UPX
+        run: .\upx-4.2.4-win64\upx.exe --best --lzma .\dist\easynpc-cotr-excluder.exe
+
+      - name: Copy config to dist
+        run: Copy-Item "config.toml" -Destination "dist\"
+
+      - name: Create release zip
+        run: Compress-Archive -Path "dist\*" -DestinationPath "easynpc-cotr-excluder-${{ github.ref_name }}.zip"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: easynpc-cotr-excluder-${{ github.ref_name }}.zip
+

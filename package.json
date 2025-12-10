@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "test": "bun test",
     "build": "bun build src/index.ts --compile --outfile dist/easynpc-cotr-excluder.exe",
     "compress": "upx-4.2.4-win64/upx.exe --best --lzma dist/easynpc-cotr-excluder.exe",
     "build:release": "bun run build && bun run compress"
