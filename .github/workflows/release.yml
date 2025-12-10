@@ -26,13 +26,12 @@ jobs:
       - name: Build executable
         run: bun run build
 
-      - name: Download UPX
-        run: |
-          Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-win64.zip" -OutFile "upx.zip"
-          Expand-Archive -Path "upx.zip" -DestinationPath "."
-
       - name: Compress executable with UPX
-        run: .\upx-4.2.4-win64\upx.exe --best --lzma .\dist\easynpc-cotr-excluder.exe
+        uses: crazy-max/ghaction-upx@v3
+        with:
+          version: latest
+          files: dist/easynpc-cotr-excluder.exe
+          args: --best --lzma
 
       - name: Copy config to dist
         run: Copy-Item "config.toml" -Destination "dist\"

@@ -6,6 +6,10 @@ out
 dist
 *.tgz
 
+# UPX (downloaded on demand)
+upx-*
+upx.zip
+
 # code coverage
 coverage
 *.lcov
