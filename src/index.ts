@@ -20,11 +20,24 @@ function expandPath(p: string): string {
   return p;
 }
 
-const configPath = path.join(process.cwd(), 'config.toml');
-if (!fs.existsSync(configPath)) {
-  console.error(`Config file not found: ${configPath}`);
+function findConfigPath(): string {
+  // Check next to executable first
+  const exeDir = path.dirname(process.execPath);
+  const exeConfigPath = path.join(exeDir, 'config.toml');
+  if (fs.existsSync(exeConfigPath)) {
+    return exeConfigPath;
+  }
+  // Fall back to current working directory
+  const cwdConfigPath = path.join(process.cwd(), 'config.toml');
+  if (fs.existsSync(cwdConfigPath)) {
+    return cwdConfigPath;
+  }
+  console.error(`Config file not found. Checked:\n  - ${exeConfigPath}\n  - ${cwdConfigPath}`);
   process.exit(1);
 }
+
+const configPath = findConfigPath();
+console.log(`Using config: ${configPath}`);
 const configContent = fs.readFileSync(configPath, 'utf-8');
 const config = parse(configContent) as Config;
 
