@@ -24,26 +24,16 @@ jobs:
         run: bun test
 
       - name: Build executable
-        run: bun run build
-
-      - name: Compress executable with UPX
-        uses: crazy-max/ghaction-upx@v3
-        with:
-          version: latest
-          files: dist/easynpc-rsv-excluder.exe
-          args: --best --lzma
+        run: bun run build:release
 
       - name: Copy config to dist
         run: Copy-Item "config.toml" -Destination "dist\"
 
-      - name: Copy 7za.exe to dist
-        run: Copy-Item "node_modules\7zip-bin\win\x64\7za.exe" -Destination "dist\"
-
       - name: Create release zip
-        run: Compress-Archive -Path "dist\*" -DestinationPath "easynpc-cotr-excluder-${{ github.ref_name }}.zip"
+        run: Compress-Archive -Path "dist\easynpc-rsv-excluder.exe", "dist\7za.exe", "dist\config.toml" -DestinationPath "easynpc-rsv-excluder-${{ github.ref_name }}.zip"
 
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
-          files: easynpc-cotr-excluder-${{ github.ref_name }}.zip
+          files: easynpc-rsv-excluder-${{ github.ref_name }}.zip
 

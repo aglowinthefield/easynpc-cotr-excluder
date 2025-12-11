@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { spawnSync } from 'child_process';
 import { expandPath } from './utils';
 import { printBanner, printSuccess, printSampleNpcs, waitForKeypress } from './cli';
 import { findConfigPath, loadConfig } from './config';
@@ -69,7 +70,7 @@ main()
     if (typeof result === 'string') {
       // Success - open output folder
       await waitForKeypress('Press Enter to open output folder and exit...');
-      Bun.spawnSync(['cmd', '/c', 'start', '', result]);
+      spawnSync('cmd', ['/c', 'start', '', result], { shell: true });
     } else if (result === null) {
       // No matching NPCs found - not an error, just nothing to do
       await waitForKeypress();

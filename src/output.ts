@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { spawnSync } from 'child_process';
 import type { NPC } from './utils';
 
 const OUTPUT_FOLDER = 'easynpc_rsv_excluder_output';
@@ -40,13 +41,12 @@ function find7zaPath(): string {
 function create7zArchive(inputFile: string, outputArchive: string): void {
   const sevenZaPath = find7zaPath();
   
-  const proc = Bun.spawnSync([sevenZaPath, 'a', outputArchive, inputFile], {
-    stdout: 'inherit',
-    stderr: 'inherit',
+  const proc = spawnSync(sevenZaPath, ['a', outputArchive, inputFile], {
+    stdio: 'inherit',
   });
   
-  if (proc.exitCode !== 0) {
-    throw new Error(`7za failed with exit code ${proc.exitCode}`);
+  if (proc.status !== 0) {
+    throw new Error(`7za failed with exit code ${proc.status}`);
   }
 }
 

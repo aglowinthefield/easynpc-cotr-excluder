@@ -1,19 +1,23 @@
 {
   "name": "easynpc-rsv-excluder",
-  "module": "src/index.ts",
+  "main": "dist/index.js",
   "type": "module",
   "private": true,
+  "bin": "dist/index.js",
   "scripts": {
     "test": "bun test",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "build": "bun build src/index.ts --compile --outfile dist/easynpc-rsv-excluder.exe",
-    "compress": "bun run scripts/compress.ts",
-    "build:release": "bun run build && bun run compress"
+    "build:bun": "bun build src/index.ts --compile --outfile dist/easynpc-rsv-excluder.exe",
+    "bundle": "bun build src/index.ts --outfile dist/index.js --target node --format cjs",
+    "build:pkg": "bun run bundle && bunx @yao-pkg/pkg dist/index.js --targets node20-win-x64 --output dist/easynpc-rsv-excluder.exe",
+    "prepare-dist": "bun run scripts/compress.ts",
+    "build:release": "bun run build:pkg && bun run prepare-dist"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/bun": "latest",
+    "@yao-pkg/pkg": "^6.3.2",
     "eslint": "^9.39.1",
     "globals": "^16.5.0",
     "typescript-eslint": "^8.49.0"
