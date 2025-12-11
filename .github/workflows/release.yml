@@ -30,11 +30,14 @@ jobs:
         uses: crazy-max/ghaction-upx@v3
         with:
           version: latest
-          files: dist/easynpc-cotr-excluder.exe
+          files: dist/easynpc-rsv-excluder.exe
           args: --best --lzma
 
       - name: Copy config to dist
         run: Copy-Item "config.toml" -Destination "dist\"
+
+      - name: Copy 7za.exe to dist
+        run: Copy-Item "node_modules\7zip-bin\win\x64\7za.exe" -Destination "dist\"
 
       - name: Create release zip
         run: Compress-Archive -Path "dist\*" -DestinationPath "easynpc-cotr-excluder-${{ github.ref_name }}.zip"
