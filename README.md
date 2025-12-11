@@ -1,4 +1,4 @@
-# easynpc-cotr-excluder
+# easynpc-rsv-excluder
 
 A utility tool that scans your EasyNPC profile selections and generates an RSV exclusion file for NPCs using Charmers of the Reach (COTR) presets. Since RSV and COTR are incompatible, this tool helps you automatically exclude all COTR-assigned NPCs from RSV modifications.
 

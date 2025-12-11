@@ -12,8 +12,8 @@ import {
   generateExclusionOutput,
 } from './utils';
 
-const OUTPUT_FOLDER = 'easynpc_excluder_output';
-const ARCHIVE_NAME = 'EasyNPC COTR Exclusion File.7z';
+const OUTPUT_FOLDER = 'easynpc_rsv_excluder_output';
+const ARCHIVE_NAME = 'EasyNPC RSV Exclusion File.7z';
 const INI_FILENAME = 'zzzEasyNPC RSV Exclude_DISTR.ini';
 
 // Wait for user to press Enter before exiting
@@ -33,7 +33,7 @@ async function waitForKeypress(message = 'Press Enter to exit...'): Promise<void
 
 async function main(): Promise<string | null | false> {
   console.log('='.repeat(60));
-  console.log('  EasyNPC COTR Excluder');
+  console.log('  EasyNPC RSV Excluder');
   console.log('  Generates RSV exclusion file for COTR NPCs');
   console.log('='.repeat(60));
   console.log();

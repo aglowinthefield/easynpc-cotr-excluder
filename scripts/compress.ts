@@ -32,7 +32,7 @@ async function ensureUpx(): Promise<string> {
 }
 
 async function compress() {
-  const exePath = 'dist/easynpc-cotr-excluder.exe';
+  const exePath = 'dist/easynpc-rsv-excluder.exe';
   
   if (!existsSync(exePath)) {
     console.error(`Executable not found: ${exePath}`);

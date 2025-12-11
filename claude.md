@@ -1,4 +1,4 @@
-# easynpc-cotr-excluder
+# easynpc-rsv-excluder
 
 ## Overview
 
