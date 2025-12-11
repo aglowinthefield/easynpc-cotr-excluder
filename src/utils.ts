@@ -1,28 +1,27 @@
 import { homedir } from 'os';
 import * as path from 'path';
 
-export type Config = {
+export interface Config {
   EasyNpcProfilePath: string;
-  OutputPath: string;
   COTRPlugins: string[];
-};
+}
 
-export type ProfileLogEntry = {
+export interface ProfileLogEntry {
   master: string;
   id: string;
   time: string;
   field: 'DefaultPlugin' | 'FacePlugin' | 'FaceMod';
   oldValue: string | null;
   newValue: string;
-};
+}
 
-export type NPC = {
+export interface NPC {
   id: string;
   master: string;
   DefaultPlugin?: string;
   FacePlugin?: string;
   FaceMod?: string;
-};
+}
 
 export function expandPath(p: string): string {
   if (p.startsWith('~/')) {
@@ -45,7 +44,7 @@ export function getNpcTargetString(npc: NPC): string {
 export function updateNpc(npcs: Record<string, NPC>, entry: ProfileLogEntry): void {
   const npcId = entry.id;
   const field = entry.field;
-  if (!npcs[npcId]) {
+  if (!(npcId in npcs)) {
     npcs[npcId] = { id: npcId, master: entry.master };
   }
   npcs[npcId].master = entry.master;

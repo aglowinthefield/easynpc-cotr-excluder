@@ -1,9 +1,6 @@
 # Path to EasyNPC Profile.log file
 EasyNpcProfilePath = "~/AppData/Local/EasyNPC/Profile.log"
 
-# Output path for the generated DISTR.ini file
-OutputPath = "./zzzEasyNPC RSV Exclude_DISTR.ini"
-
 # List of COTR plugins to check against
 COTRPlugins = [
   "Karura's Ordinary People Refined.esp",
