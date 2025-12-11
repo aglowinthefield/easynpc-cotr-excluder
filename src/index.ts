@@ -1,70 +1,26 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import * as readline from 'readline';
-import { parse } from 'smol-toml';
-import sevenZip from '7zip-min';
-import {
-  type Config,
-  type ProfileLogEntry,
-  type NPC,
-  expandPath,
-  updateNpc,
-  generateExclusionOutput,
-} from './utils';
-
-const OUTPUT_FOLDER = 'easynpc_rsv_excluder_output';
-const ARCHIVE_NAME = 'EasyNPC RSV Exclusion File.7z';
-const INI_FILENAME = 'zzzEasyNPC RSV Exclude_DISTR.ini';
-
-// Wait for user to press Enter before exiting
-async function waitForKeypress(message = 'Press Enter to exit...'): Promise<void> {
-  console.log(`\n${message}`);
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  return new Promise((resolve) => {
-    rl.question('', () => {
-      rl.close();
-      resolve();
-    });
-  });
-}
+import { expandPath } from './utils';
+import { printBanner, printSuccess, printSampleNpcs, waitForKeypress } from './cli';
+import { findConfigPath, loadConfig } from './config';
+import { processProfileLog, filterMatchingNpcs } from './profile';
+import { createOutput } from './output';
 
 async function main(): Promise<string | null | false> {
-  console.log('='.repeat(60));
-  console.log('  EasyNPC RSV Excluder');
-  console.log('  Generates RSV exclusion file from EasyNPC presets');
-  console.log('='.repeat(60));
-  console.log();
+  printBanner();
 
-  // Find and load config
-  let configPath: string;
-  const exeDir = path.dirname(process.execPath);
-  const exeConfigPath = path.join(exeDir, 'config.toml');
-  const cwdConfigPath = path.join(process.cwd(), 'config.toml');
-
-  if (fs.existsSync(exeConfigPath)) {
-    configPath = exeConfigPath;
-  } else if (fs.existsSync(cwdConfigPath)) {
-    configPath = cwdConfigPath;
-  } else {
-    console.error('ERROR: Config file not found!');
-    console.error('Checked locations:');
-    console.error(`  - ${exeConfigPath}`);
-    console.error(`  - ${cwdConfigPath}`);
+  // Load config
+  const configPath = findConfigPath();
+  if (!configPath) {
+    console.error('ERROR: config.toml not found!');
     console.error('\nMake sure config.toml is in the same folder as the exe.');
     return false;
   }
-
   console.log(`Config: ${configPath}`);
-  const configContent = fs.readFileSync(configPath, 'utf-8');
-  const config = parse(configContent) as Config;
+  const config = loadConfig(configPath);
 
-  // Resolve profile path
+  // Check profile exists
   const profilePath = expandPath(config.EasyNpcProfilePath);
   console.log(`Profile log: ${profilePath}`);
-
   if (!fs.existsSync(profilePath)) {
     console.error(`\nERROR: EasyNPC Profile.log not found!`);
     console.error(`Expected location: ${profilePath}`);
@@ -72,40 +28,17 @@ async function main(): Promise<string | null | false> {
     return false;
   }
 
-  // Process the profile log
+  // Process profile log
   console.log('\nProcessing profile log...');
-  
-  const npcs: Record<string, NPC> = {};
-  let lineCount = 0;
-  let parseErrors = 0;
-
-  const fileStream = fs.createReadStream(profilePath);
-  const rl = readline.createInterface({
-    input: fileStream,
-    crlfDelay: Infinity
-  });
-
-  for await (const line of rl) {
-    lineCount++;
-    try {
-      const profileLogEntry = JSON.parse(line) as ProfileLogEntry;
-      updateNpc(npcs, profileLogEntry);
-    } catch {
-      parseErrors++;
-    }
-  }
-
+  const { npcs, lineCount, parseErrors } = await processProfileLog(profilePath);
   console.log(`  Processed ${lineCount} log entries`);
   if (parseErrors > 0) {
     console.log(`  (${parseErrors} entries skipped due to parse errors)`);
   }
 
-  // Count NPCs and matches
+  // Filter matches
   const totalNpcs = Object.keys(npcs).length;
-  const matchedNpcs = Object.values(npcs).filter(
-    npc => npc.FacePlugin && config.ExcludePlugins.includes(npc.FacePlugin)
-  );
-
+  const matchedNpcs = filterMatchingNpcs(npcs, config.ExcludePlugins);
   console.log(`  Found ${totalNpcs} unique NPCs with modifications`);
   console.log(`  Found ${matchedNpcs.length} NPCs to exclude from RSV`);
 
@@ -117,83 +50,29 @@ async function main(): Promise<string | null | false> {
     return null;
   }
 
-  // Generate output
-  const result = generateExclusionOutput(npcs, config.ExcludePlugins);
-  
-  // Create output folder (delete existing if present)
-  const outputDir = path.join(exeDir, OUTPUT_FOLDER);
-  
-  if (fs.existsSync(outputDir)) {
-    console.log(`\nRemoving existing output folder...`);
-    fs.rmSync(outputDir, { recursive: true });
-  }
-  
-  fs.mkdirSync(outputDir, { recursive: true });
-  
-  // Write the INI file
-  const iniPath = path.join(outputDir, INI_FILENAME);
-  fs.writeFileSync(iniPath, result);
-  console.log(`\nCreated: ${iniPath}`);
-
-  // Create 7z archive
-  const archivePath = path.join(outputDir, ARCHIVE_NAME);
-  console.log(`Creating archive: ${archivePath}`);
-  
+  // Create output
   try {
-    await new Promise<void>((resolve, reject) => {
-      sevenZip.pack(iniPath, archivePath, (err: Error | null) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
+    const { outputDir, archivePath } = await createOutput(npcs, config.ExcludePlugins);
+    printSuccess(matchedNpcs.length, archivePath);
+    printSampleNpcs(matchedNpcs);
+    return outputDir;
   } catch (err: unknown) {
-    console.error(`\nERROR: Failed to create 7z archive!`);
+    console.error(`\nERROR: Failed to create output!`);
     console.error('Details:', err);
-    console.log(`\nThe INI file was still created at:`);
-    console.log(`  ${iniPath}`);
     return false;
   }
-  
-  // Delete the loose INI file after successful archive creation
-  fs.unlinkSync(iniPath);
-  
-  console.log(`\n${'='.repeat(60)}`);
-  console.log(`  SUCCESS!`);
-  console.log('='.repeat(60));
-  console.log(`\nExcluded ${matchedNpcs.length} NPCs from RSV.`);
-  console.log(`\nOutput archive created at:`);
-  console.log(`  ${archivePath}`);
-  console.log(`\nTo install:`);
-  console.log(`  1. Open your mod manager (MO2, Vortex, etc.)`);
-  console.log(`  2. Install the archive as a new mod`);
-  console.log(`  3. Enable the mod and place it after RSV in your load order`);
-
-  // Show a few examples
-  if (matchedNpcs.length > 0) {
-    console.log('\nSample excluded NPCs:');
-    matchedNpcs.slice(0, 5).forEach(npc => {
-      console.log(`  - ${npc.id} (${npc.master}) -> ${npc.FacePlugin}`);
-    });
-    if (matchedNpcs.length > 5) {
-      console.log(`  ... and ${matchedNpcs.length - 5} more`);
-    }
-  }
-
-  return outputDir;
 }
 
-// Run main and handle errors
+// Entry point
 main()
   .then(async (result) => {
     if (typeof result === 'string') {
       // Success - open output folder
       await waitForKeypress('Press Enter to open output folder and exit...');
-      Bun.spawn(['explorer', result], { stdout: 'ignore', stderr: 'ignore' });
-      process.exit(0);
+      Bun.spawnSync(['cmd', '/c', 'start', '', result]);
     } else if (result === null) {
       // No matching NPCs found - not an error, just nothing to do
       await waitForKeypress();
-      process.exit(0);
     } else {
       // Error occurred (result is false)
       console.log('\n[!] There were errors. See above for details.');
