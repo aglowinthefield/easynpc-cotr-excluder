@@ -33,34 +33,3 @@ export function expandPath(p: string): string {
   return p;
 }
 
-export function getNpcFormId(npc: NPC): string {
-  return '0x' + npc.id.replace(/^0+/, '');
-}
-
-export function getNpcTargetString(npc: NPC): string {
-  return `${getNpcFormId(npc)}~${npc.master}`;
-}
-
-export function updateNpc(npcs: Record<string, NPC>, entry: ProfileLogEntry): void {
-  const npcId = entry.id;
-  const field = entry.field;
-  if (!(npcId in npcs)) {
-    npcs[npcId] = { id: npcId, master: entry.master };
-  }
-  npcs[npcId].master = entry.master;
-  npcs[npcId][field] = entry.newValue;
-}
-
-export function generateExclusionOutput(npcs: Record<string, NPC>, excludePlugins: string[]): string {
-  let result = "Keyword = RSVignore|NONE|";
-  const npcStrings: string[] = [];
-  for (const key of Object.keys(npcs)) {
-    const npc = npcs[key];
-    if (npc.FacePlugin && excludePlugins.includes(npc.FacePlugin)) {
-      npcStrings.push(getNpcTargetString(npc));
-    }
-  }
-  result += npcStrings.join(',');
-  return result;
-}
-

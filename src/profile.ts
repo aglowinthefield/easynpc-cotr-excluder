@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as readline from 'readline';
 import type { NPC, ProfileLogEntry } from './utils';
-import { updateNpc } from './utils';
 
 export interface ProcessResult {
   npcs: Record<string, NPC>;
@@ -31,6 +30,16 @@ export async function processProfileLog(profilePath: string): Promise<ProcessRes
   }
 
   return { npcs, lineCount, parseErrors };
+}
+
+export function updateNpc(npcs: Record<string, NPC>, entry: ProfileLogEntry): void {
+  const npcId = entry.id;
+  const field = entry.field;
+  if (!(npcId in npcs)) {
+    npcs[npcId] = { id: npcId, master: entry.master };
+  }
+  npcs[npcId].master = entry.master;
+  npcs[npcId][field] = entry.newValue;
 }
 
 export function filterMatchingNpcs(npcs: Record<string, NPC>, excludePlugins: string[]): NPC[] {

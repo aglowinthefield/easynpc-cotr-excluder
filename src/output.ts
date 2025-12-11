@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import sevenZip from '7zip-min';
 import type { NPC } from './utils';
-import { generateExclusionOutput } from './utils';
 
 const OUTPUT_FOLDER = 'easynpc_rsv_excluder_output';
 const ARCHIVE_NAME = 'EasyNPC RSV Exclusion File.7z';
@@ -49,4 +48,26 @@ export async function createOutput(
 
   return { outputDir, archivePath };
 }
+
+export function generateExclusionOutput(npcs: Record<string, NPC>, excludePlugins: string[]): string {
+  let result = "Keyword = RSVignore|NONE|";
+  const npcStrings: string[] = [];
+  for (const key of Object.keys(npcs)) {
+    const npc = npcs[key];
+    if (npc.FacePlugin && excludePlugins.includes(npc.FacePlugin)) {
+      npcStrings.push(getNpcTargetString(npc));
+    }
+  }
+  result += npcStrings.join(',');
+  return result;
+}
+
+export function getNpcTargetString(npc: NPC): string {
+  return `${getNpcFormId(npc)}~${npc.master}`;
+}
+
+export function getNpcFormId(npc: NPC): string {
+  return '0x' + npc.id.replace(/^0+/, '');
+}
+
 
