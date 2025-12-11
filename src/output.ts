@@ -37,19 +37,16 @@ function find7zaPath(): string {
 /**
  * Create a 7z archive using the 7za command-line tool
  */
-async function create7zArchive(inputFile: string, outputArchive: string): Promise<void> {
+function create7zArchive(inputFile: string, outputArchive: string): void {
   const sevenZaPath = find7zaPath();
   
-  const proc = Bun.spawn([sevenZaPath, 'a', outputArchive, inputFile], {
-    stdout: 'pipe',
-    stderr: 'pipe',
+  const proc = Bun.spawnSync([sevenZaPath, 'a', outputArchive, inputFile], {
+    stdout: 'inherit',
+    stderr: 'inherit',
   });
   
-  const exitCode = await proc.exited;
-  
-  if (exitCode !== 0) {
-    const stderr = await new Response(proc.stderr).text();
-    throw new Error(`7za failed with exit code ${exitCode}: ${stderr}`);
+  if (proc.exitCode !== 0) {
+    throw new Error(`7za failed with exit code ${proc.exitCode}`);
   }
 }
 
@@ -82,7 +79,7 @@ export async function createOutput(
   const archivePath = path.join(outputDir, ARCHIVE_NAME);
   console.log(`Creating archive: ${archivePath}`);
 
-  await create7zArchive(iniPath, archivePath);
+  create7zArchive(iniPath, archivePath);
 
   // Remove loose INI after successful archive
   fs.unlinkSync(iniPath);
