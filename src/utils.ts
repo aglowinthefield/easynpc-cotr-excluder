@@ -3,7 +3,7 @@ import * as path from 'path';
 
 export interface Config {
   EasyNpcProfilePath: string;
-  COTRPlugins: string[];
+  ExcludePlugins: string[];
 }
 
 export interface ProfileLogEntry {
@@ -51,12 +51,12 @@ export function updateNpc(npcs: Record<string, NPC>, entry: ProfileLogEntry): vo
   npcs[npcId][field] = entry.newValue;
 }
 
-export function generateExclusionOutput(npcs: Record<string, NPC>, cotrPlugins: string[]): string {
+export function generateExclusionOutput(npcs: Record<string, NPC>, excludePlugins: string[]): string {
   let result = "Keyword = RSVignore|NONE|";
   const npcStrings: string[] = [];
   for (const key of Object.keys(npcs)) {
     const npc = npcs[key];
-    if (npc.FacePlugin && cotrPlugins.includes(npc.FacePlugin)) {
+    if (npc.FacePlugin && excludePlugins.includes(npc.FacePlugin)) {
       npcStrings.push(getNpcTargetString(npc));
     }
   }

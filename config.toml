@@ -1,8 +1,8 @@
 # Path to EasyNPC Profile.log file
 EasyNpcProfilePath = "~/AppData/Local/EasyNPC/Profile.log"
 
-# List of COTR plugins to check against
-COTRPlugins = [
+# List of plugins to exclude from RSV (NPCs using these face plugins will be excluded)
+ExcludePlugins = [
   "Karura's Ordinary People Refined.esp",
   "MOSRefined.esp",
   "MOSRefinedDawnguard.esp",

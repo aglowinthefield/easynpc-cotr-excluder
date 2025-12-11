@@ -102,28 +102,28 @@ describe('updateNpc', () => {
 });
 
 describe('generateExclusionOutput', () => {
-  const cotrPlugins = [
+  const excludePlugins = [
     'MOSRefined.esp',
     'TSOSRefined.esp',
     "Karura's Ordinary People Refined.esp",
   ];
 
-  it('generates correct output for NPCs with COTR plugins', () => {
+  it('generates correct output for NPCs with matching plugins', () => {
     const npcs: Record<string, NPC> = {
       '00012345': { id: '00012345', master: 'Skyrim.esm', FacePlugin: 'MOSRefined.esp' },
     };
 
-    const result = generateExclusionOutput(npcs, cotrPlugins);
+    const result = generateExclusionOutput(npcs, excludePlugins);
 
     expect(result).toBe('Keyword = RSVignore|NONE|0x12345~Skyrim.esm');
   });
 
-  it('excludes NPCs without COTR plugins', () => {
+  it('excludes NPCs without matching plugins', () => {
     const npcs: Record<string, NPC> = {
       '00012345': { id: '00012345', master: 'Skyrim.esm', FacePlugin: 'SomeOtherMod.esp' },
     };
 
-    const result = generateExclusionOutput(npcs, cotrPlugins);
+    const result = generateExclusionOutput(npcs, excludePlugins);
 
     expect(result).toBe('Keyword = RSVignore|NONE|');
   });
@@ -133,18 +133,18 @@ describe('generateExclusionOutput', () => {
       '00012345': { id: '00012345', master: 'Skyrim.esm', DefaultPlugin: 'MOSRefined.esp' },
     };
 
-    const result = generateExclusionOutput(npcs, cotrPlugins);
+    const result = generateExclusionOutput(npcs, excludePlugins);
 
     expect(result).toBe('Keyword = RSVignore|NONE|');
   });
 
-  it('handles multiple NPCs with COTR plugins', () => {
+  it('handles multiple NPCs with matching plugins', () => {
     const npcs: Record<string, NPC> = {
       '00012345': { id: '00012345', master: 'Skyrim.esm', FacePlugin: 'MOSRefined.esp' },
       '00054321': { id: '00054321', master: 'Dawnguard.esm', FacePlugin: 'TSOSRefined.esp' },
     };
 
-    const result = generateExclusionOutput(npcs, cotrPlugins);
+    const result = generateExclusionOutput(npcs, excludePlugins);
 
     expect(result).toContain('0x12345~Skyrim.esm');
     expect(result).toContain('0x54321~Dawnguard.esm');
@@ -154,7 +154,7 @@ describe('generateExclusionOutput', () => {
   it('handles empty NPC list', () => {
     const npcs: Record<string, NPC> = {};
 
-    const result = generateExclusionOutput(npcs, cotrPlugins);
+    const result = generateExclusionOutput(npcs, excludePlugins);
 
     expect(result).toBe('Keyword = RSVignore|NONE|');
   });

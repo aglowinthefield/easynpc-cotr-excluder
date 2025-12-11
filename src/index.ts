@@ -34,7 +34,7 @@ async function waitForKeypress(message = 'Press Enter to exit...'): Promise<void
 async function main(): Promise<string | null | false> {
   console.log('='.repeat(60));
   console.log('  EasyNPC RSV Excluder');
-  console.log('  Generates RSV exclusion file for COTR NPCs');
+  console.log('  Generates RSV exclusion file from EasyNPC presets');
   console.log('='.repeat(60));
   console.log();
 
@@ -100,25 +100,25 @@ async function main(): Promise<string | null | false> {
     console.log(`  (${parseErrors} entries skipped due to parse errors)`);
   }
 
-  // Count NPCs and COTR matches
+  // Count NPCs and matches
   const totalNpcs = Object.keys(npcs).length;
-  const cotrNpcs = Object.values(npcs).filter(
-    npc => npc.FacePlugin && config.COTRPlugins.includes(npc.FacePlugin)
+  const matchedNpcs = Object.values(npcs).filter(
+    npc => npc.FacePlugin && config.ExcludePlugins.includes(npc.FacePlugin)
   );
 
   console.log(`  Found ${totalNpcs} unique NPCs with modifications`);
-  console.log(`  Found ${cotrNpcs.length} NPCs using COTR presets`);
+  console.log(`  Found ${matchedNpcs.length} NPCs to exclude from RSV`);
 
-  if (cotrNpcs.length === 0) {
-    console.log('\nNo COTR NPCs found - nothing to exclude.');
+  if (matchedNpcs.length === 0) {
+    console.log('\nNo matching NPCs found - nothing to exclude.');
     console.log('This might mean:');
-    console.log('  - No NPCs are using COTR presets in EasyNPC');
-    console.log('  - The COTR plugin names in config.toml need updating');
+    console.log('  - No NPCs match the configured plugins in EasyNPC');
+    console.log('  - The plugin names in config.toml need updating');
     return null;
   }
 
   // Generate output
-  const result = generateExclusionOutput(npcs, config.COTRPlugins);
+  const result = generateExclusionOutput(npcs, config.ExcludePlugins);
   
   // Create output folder (delete existing if present)
   const outputDir = path.join(exeDir, OUTPUT_FOLDER);
@@ -160,7 +160,7 @@ async function main(): Promise<string | null | false> {
   console.log(`\n${'='.repeat(60)}`);
   console.log(`  SUCCESS!`);
   console.log('='.repeat(60));
-  console.log(`\nExcluded ${cotrNpcs.length} NPCs from RSV.`);
+  console.log(`\nExcluded ${matchedNpcs.length} NPCs from RSV.`);
   console.log(`\nOutput archive created at:`);
   console.log(`  ${archivePath}`);
   console.log(`\nTo install:`);
@@ -169,13 +169,13 @@ async function main(): Promise<string | null | false> {
   console.log(`  3. Enable the mod and place it after RSV in your load order`);
 
   // Show a few examples
-  if (cotrNpcs.length > 0) {
+  if (matchedNpcs.length > 0) {
     console.log('\nSample excluded NPCs:');
-    cotrNpcs.slice(0, 5).forEach(npc => {
+    matchedNpcs.slice(0, 5).forEach(npc => {
       console.log(`  - ${npc.id} (${npc.master}) -> ${npc.FacePlugin}`);
     });
-    if (cotrNpcs.length > 5) {
-      console.log(`  ... and ${cotrNpcs.length - 5} more`);
+    if (matchedNpcs.length > 5) {
+      console.log(`  ... and ${matchedNpcs.length - 5} more`);
     }
   }
 
@@ -191,7 +191,7 @@ main()
       Bun.spawn(['explorer', result], { stdout: 'ignore', stderr: 'ignore' });
       process.exit(0);
     } else if (result === null) {
-      // No COTR NPCs found - not an error, just nothing to do
+      // No matching NPCs found - not an error, just nothing to do
       await waitForKeypress();
       process.exit(0);
     } else {
