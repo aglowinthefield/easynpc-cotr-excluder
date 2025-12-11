@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'bun:test';
-import {
-  type NPC,
-  type ProfileLogEntry,
-  getNpcFormId,
-  getNpcTargetString,
-  updateNpc,
-  generateExclusionOutput,
-} from './utils';
+import type { NPC, ProfileLogEntry } from './utils';
+import { getNpcFormId, getNpcTargetString, generateExclusionOutput } from './output';
+import { updateNpc } from './profile';
 
 describe('getNpcFormId', () => {
   it('removes leading zeros and adds 0x prefix', () => {
