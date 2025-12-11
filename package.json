@@ -22,7 +22,9 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "7zip-min": "^2.1.0",
     "smol-toml": "^1.5.2"
+  },
+  "optionalDependencies": {
+    "7zip-bin": "^5.2.0"
   }
 }

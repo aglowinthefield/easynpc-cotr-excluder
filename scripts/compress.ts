@@ -1,4 +1,4 @@
-import { existsSync } from 'fs';
+import { existsSync, copyFileSync } from 'fs';
 import { join } from 'path';
 import { $ } from 'bun';
 
@@ -6,6 +6,29 @@ const UPX_VERSION = '4.2.4';
 const UPX_DIR = `upx-${UPX_VERSION}-win64`;
 const UPX_ZIP = 'upx.zip';
 const UPX_URL = `https://github.com/upx/upx/releases/download/v${UPX_VERSION}/upx-${UPX_VERSION}-win64.zip`;
+
+/**
+ * Copy 7za.exe from 7zip-bin package to dist folder
+ */
+function copy7za(): void {
+  const destPath = 'dist/7za.exe';
+  
+  // Try to find 7za from 7zip-bin package
+  try {
+    const sevenZipBin = require('7zip-bin');
+    if (sevenZipBin.path7za && existsSync(sevenZipBin.path7za)) {
+      copyFileSync(sevenZipBin.path7za, destPath);
+      console.log(`Copied 7za.exe to dist/`);
+      return;
+    }
+  } catch {
+    // Fall through to error
+  }
+  
+  throw new Error(
+    'Could not find 7za.exe from 7zip-bin package. Run "bun install" first.'
+  );
+}
 
 async function ensureUpx(): Promise<string> {
   const upxPath = join(UPX_DIR, 'upx.exe');
@@ -39,6 +62,9 @@ async function compress() {
     console.error('Run "bun run build" first.');
     process.exit(1);
   }
+
+  // Copy 7za.exe to dist folder for distribution
+  copy7za();
 
   const upxPath = await ensureUpx();
   

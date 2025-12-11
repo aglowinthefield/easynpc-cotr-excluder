@@ -1,11 +1,57 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import sevenZip from '7zip-min';
 import type { NPC } from './utils';
 
 const OUTPUT_FOLDER = 'easynpc_rsv_excluder_output';
 const ARCHIVE_NAME = 'EasyNPC RSV Exclusion File.7z';
 const INI_FILENAME = 'zzzEasyNPC RSV Exclude_DISTR.ini';
+
+/**
+ * Find 7za.exe - looks in the same directory as the executable first,
+ * then falls back to the bundled node_modules path for development.
+ */
+function find7zaPath(): string {
+  const exeDir = path.dirname(process.execPath);
+  
+  // For standalone exe: look for 7za.exe next to the executable
+  const localPath = path.join(exeDir, '7za.exe');
+  if (fs.existsSync(localPath)) {
+    return localPath;
+  }
+  
+  // For development: try to use the 7zip-bin package
+  try {
+    const sevenZipBin = require('7zip-bin');
+    if (sevenZipBin.path7za && fs.existsSync(sevenZipBin.path7za)) {
+      return sevenZipBin.path7za;
+    }
+  } catch {
+    // 7zip-bin not available
+  }
+  
+  throw new Error(
+    `Could not find 7za.exe. Please ensure 7za.exe is in the same folder as the executable (${exeDir})`
+  );
+}
+
+/**
+ * Create a 7z archive using the 7za command-line tool
+ */
+async function create7zArchive(inputFile: string, outputArchive: string): Promise<void> {
+  const sevenZaPath = find7zaPath();
+  
+  const proc = Bun.spawn([sevenZaPath, 'a', outputArchive, inputFile], {
+    stdout: 'pipe',
+    stderr: 'pipe',
+  });
+  
+  const exitCode = await proc.exited;
+  
+  if (exitCode !== 0) {
+    const stderr = await new Response(proc.stderr).text();
+    throw new Error(`7za failed with exit code ${exitCode}: ${stderr}`);
+  }
+}
 
 export interface OutputResult {
   outputDir: string;
@@ -36,12 +82,7 @@ export async function createOutput(
   const archivePath = path.join(outputDir, ARCHIVE_NAME);
   console.log(`Creating archive: ${archivePath}`);
 
-  await new Promise<void>((resolve, reject) => {
-    sevenZip.pack(iniPath, archivePath, (err: Error | null) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+  await create7zArchive(iniPath, archivePath);
 
   // Remove loose INI after successful archive
   fs.unlinkSync(iniPath);
